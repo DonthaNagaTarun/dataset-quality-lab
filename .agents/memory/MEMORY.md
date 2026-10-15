@@ -1,0 +1,1 @@
+- [Python package installation](python-runtime.md) — use the full Python toolchain when the base module lacks pip or rejects package installs.
