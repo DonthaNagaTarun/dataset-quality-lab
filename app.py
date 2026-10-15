@@ -72,6 +72,9 @@ st.markdown(
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0c1427 0%, #0a1020 58%, #0b1020 100%);
         border-right: 1px solid rgba(151, 169, 207, 0.12);
+        max-width: 15.5rem !important;
+        min-width: 15.5rem !important;
+        width: 15.5rem !important;
     }
     [data-testid="stSidebar"] > div:first-child {
         padding-top: 1.4rem;
@@ -172,24 +175,52 @@ st.markdown(
         border: 1px solid var(--line);
         border-radius: 16px;
         box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
-        min-height: 6.3rem;
-        padding: 0.9rem 1rem;
+        height: auto;
+        min-height: 7.1rem;
+        min-width: 0;
+        padding: 0.82rem 0.88rem;
     }
     [data-testid="stMetricLabel"] {
         color: #a6b3cd !important;
-        font-size: 0.69rem !important;
+        font-size: 0.65rem !important;
         font-weight: 720 !important;
-        letter-spacing: 0.09em;
+        letter-spacing: 0.055em;
+        line-height: 1.28 !important;
+        min-height: 1.65rem;
         text-transform: uppercase;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+    }
+    [data-testid="stMetricLabel"] * {
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
     }
     [data-testid="stMetricValue"] {
         color: #f5f7ff !important;
-        font-size: clamp(1.25rem, 2vw, 1.8rem) !important;
+        font-size: clamp(1.15rem, 1.8vw, 1.65rem) !important;
         font-weight: 720 !important;
         letter-spacing: -0.04em;
+        line-height: 1.15 !important;
+        overflow-wrap: anywhere;
+        white-space: normal !important;
     }
     [data-testid="stMetricDelta"] {
         font-size: 0.72rem !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"] [data-testid="stMetric"]):not(:has([data-testid="stPlotlyChart"])) {
+        column-gap: 0.7rem;
+        display: flex;
+        flex-wrap: wrap;
+        row-gap: 0.75rem;
+    }
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"] [data-testid="stMetric"]):not(:has([data-testid="stPlotlyChart"])) > div[data-testid="column"] {
+        flex: 1 1 calc(25% - 0.7rem) !important;
+        min-width: 9.5rem !important;
     }
     .stTabs [data-baseweb="tab-list"] {
         background: rgba(13, 20, 37, 0.82);
@@ -253,6 +284,14 @@ st.markdown(
         border-radius: 12px;
         overflow: hidden;
     }
+    [data-testid="stPlotlyChart"] {
+        background: linear-gradient(145deg, rgba(15, 24, 43, 0.72), rgba(12, 18, 34, 0.48));
+        border: 1px solid rgba(151, 169, 207, 0.12);
+        border-radius: 17px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        padding: 0.25rem 0.35rem 0;
+    }
     [data-testid="stAlert"] {
         background: rgba(20, 31, 55, 0.8);
         border: 1px solid var(--line);
@@ -270,11 +309,11 @@ st.markdown(
         color: #fff;
         margin-right: 0.6rem;
     }
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
         [data-testid="stMainBlockContainer"] {
-            padding-left: 1rem;
-            padding-right: 1rem;
-            padding-top: 1rem;
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+            padding-top: 1.1rem;
         }
         h1 {
             font-size: 1.75rem !important;
@@ -285,6 +324,31 @@ st.markdown(
         .stTabs [data-baseweb="tab"] {
             font-size: 0.72rem;
             padding: 0 0.55rem;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"] [data-testid="stPlotlyChart"]) {
+            flex-wrap: wrap;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"] [data-testid="stPlotlyChart"]) > div[data-testid="column"] {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        [data-testid="stSidebar"] {
+            max-width: min(84vw, 17rem) !important;
+            min-width: min(84vw, 17rem) !important;
+            width: min(84vw, 17rem) !important;
+        }
+    }
+    @media (max-width: 480px) {
+        [data-testid="stMainBlockContainer"] {
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+        }
+        [data-testid="stMetric"] {
+            border-radius: 13px;
+            padding: 0.72rem;
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 0.61rem !important;
         }
     }
     </style>
@@ -956,7 +1020,7 @@ with overview_tab:
             number={
                 "suffix": "/100",
                 "valueformat": ".1f",
-                "font": {"color": "#f5f7ff", "size": 38},
+                "font": {"color": "#f5f7ff", "size": 44},
             },
             title={
                 "text": f"DATA QUALITY INDEX · {score_label.upper()}",
@@ -968,7 +1032,7 @@ with overview_tab:
                     "tickcolor": "#73819e",
                     "tickfont": {"color": "#8f9db8", "size": 10},
                 },
-                "bar": {"color": score_color, "thickness": 0.27},
+                "bar": {"color": score_color, "thickness": 0.32},
                 "bgcolor": "rgba(15, 23, 42, 0.88)",
                 "bordercolor": "rgba(151, 169, 207, 0.17)",
                 "borderwidth": 1,
@@ -980,7 +1044,7 @@ with overview_tab:
             },
         )
     )
-    style_plotly_figure(score_chart, height=285)
+    style_plotly_figure(score_chart, height=320)
 
     left, right = st.columns([0.95, 1.45])
     with left:
