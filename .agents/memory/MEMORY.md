@@ -1,1 +1,2 @@
 - [Python package installation](python-runtime.md) — use the full Python toolchain when the base module lacks pip or rejects package installs.
+- [Replit Streamlit preview](replit-streamlit-preview.md) — the standalone app needs forwarded-port mapping and proxy-origin support in its workflow.

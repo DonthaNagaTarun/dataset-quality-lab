@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
+from html import escape
 from io import BytesIO
 from typing import Any
 
@@ -35,6 +36,261 @@ APP_TITLE = (
 RANDOM_STATE = 42
 
 st.set_page_config(page_title="Dataset Quality Assessment", page_icon="📊", layout="wide")
+px.defaults.template = "plotly_dark"
+
+st.markdown(
+    """
+    <style>
+    :root {
+        color-scheme: dark;
+        --ink: #f4f7ff;
+        --muted: #9aa8c4;
+        --line: rgba(151, 169, 207, 0.14);
+        --panel: rgba(16, 24, 43, 0.86);
+        --blue: #5b8cff;
+        --violet: #a78bfa;
+    }
+    .stApp {
+        background: #080d19;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(70rem 34rem at 8% -12%, rgba(37, 99, 235, 0.21), transparent 55%),
+            radial-gradient(58rem 34rem at 104% -10%, rgba(124, 58, 237, 0.19), transparent 51%),
+            linear-gradient(180deg, #0a1020 0%, #080d19 55%, #0a1020 100%);
+    }
+    [data-testid="stHeader"] {
+        background: rgba(8, 13, 25, 0.35);
+    }
+    [data-testid="stMainBlockContainer"] {
+        max-width: 1480px;
+        padding-top: 1.65rem;
+        padding-bottom: 3.25rem;
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0c1427 0%, #0a1020 58%, #0b1020 100%);
+        border-right: 1px solid rgba(151, 169, 207, 0.12);
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 1.4rem;
+    }
+    [data-testid="stSidebar"] h2 {
+        color: #eef3ff;
+        letter-spacing: -0.025em;
+    }
+    h1 {
+        background: linear-gradient(100deg, #f6f8ff 5%, #c4d1ff 49%, #9b8cff 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent !important;
+        font-size: clamp(1.8rem, 3.25vw, 2.7rem) !important;
+        font-weight: 740 !important;
+        letter-spacing: -0.055em !important;
+        line-height: 1.08 !important;
+        max-width: 1100px;
+        padding-bottom: 0.35rem;
+    }
+    h2, h3 {
+        color: #edf2ff;
+        letter-spacing: -0.035em;
+    }
+    p, label, [data-testid="stMarkdownContainer"] {
+        color: #c4cde0;
+    }
+    [data-testid="stCaptionContainer"] {
+        color: var(--muted);
+    }
+    .hero-kicker, .sidebar-kicker {
+        align-items: center;
+        color: #91a1c2;
+        display: flex;
+        font-size: 0.69rem;
+        font-weight: 750;
+        gap: 0.55rem;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.65rem;
+        text-transform: uppercase;
+    }
+    .hero-kicker::before {
+        background: linear-gradient(135deg, var(--blue), var(--violet));
+        border-radius: 999px;
+        content: "";
+        height: 0.48rem;
+        width: 0.48rem;
+        box-shadow: 0 0 18px rgba(124, 92, 255, 0.8);
+    }
+    .hero-kicker span {
+        border: 1px solid rgba(144, 163, 205, 0.2);
+        border-radius: 999px;
+        color: #a9b7d4;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        margin-left: 0.2rem;
+        padding: 0.24rem 0.55rem;
+    }
+    .dataset-strip {
+        align-items: center;
+        background: linear-gradient(110deg, rgba(20, 31, 54, 0.92), rgba(22, 23, 48, 0.84));
+        border: 1px solid rgba(130, 151, 197, 0.16);
+        border-radius: 15px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem 1rem;
+        margin: 1.35rem 0 1.15rem;
+        padding: 0.82rem 1rem;
+    }
+    .dataset-strip__dot {
+        background: #43d6a1;
+        border-radius: 50%;
+        box-shadow: 0 0 12px rgba(67, 214, 161, 0.65);
+        flex: 0 0 0.48rem;
+        height: 0.48rem;
+    }
+    .dataset-strip__label {
+        color: #93a2c1;
+        font-size: 0.62rem;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+    .dataset-strip__name {
+        color: #f1f5ff;
+        font-size: 0.9rem;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+    }
+    .dataset-strip__meta {
+        color: #a5b2cc;
+        font-size: 0.78rem;
+        margin-left: auto;
+    }
+    [data-testid="stMetric"] {
+        background: linear-gradient(145deg, rgba(20, 31, 55, 0.96), rgba(13, 20, 37, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+        min-height: 6.3rem;
+        padding: 0.9rem 1rem;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #a6b3cd !important;
+        font-size: 0.69rem !important;
+        font-weight: 720 !important;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+    [data-testid="stMetricValue"] {
+        color: #f5f7ff !important;
+        font-size: clamp(1.25rem, 2vw, 1.8rem) !important;
+        font-weight: 720 !important;
+        letter-spacing: -0.04em;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 0.72rem !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(13, 20, 37, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        gap: 0.3rem;
+        padding: 0.35rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        border-radius: 10px;
+        color: #a0aec9;
+        font-size: 0.83rem;
+        font-weight: 650;
+        height: 2.65rem;
+        padding: 0 1rem;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(105deg, rgba(59, 130, 246, 0.26), rgba(139, 92, 246, 0.27));
+        color: #f5f7ff;
+    }
+    .stTabs [data-baseweb="tab-highlight"] {
+        background: transparent;
+    }
+    .stTabs [data-baseweb="tab-border"] {
+        display: none;
+    }
+    .stTabs [data-testid="stVerticalBlock"] {
+        gap: 1rem;
+    }
+    .stButton button, .stDownloadButton button {
+        border: 1px solid rgba(125, 148, 205, 0.28);
+        border-radius: 11px;
+        font-weight: 650;
+        transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+    .stButton button[kind="primary"] {
+        background: linear-gradient(110deg, #367cf6, #8055e8);
+        border: 0;
+        box-shadow: 0 7px 22px rgba(73, 93, 237, 0.25);
+        color: white;
+    }
+    .stButton button:hover, .stDownloadButton button:hover {
+        border-color: rgba(151, 174, 237, 0.58);
+        box-shadow: 0 8px 24px rgba(49, 76, 156, 0.2);
+        transform: translateY(-1px);
+    }
+    [data-baseweb="select"] > div, [data-baseweb="input"] > div,
+    [data-baseweb="textarea"] > div {
+        background: rgba(15, 23, 42, 0.92);
+        border-color: rgba(135, 153, 193, 0.23);
+        border-radius: 10px;
+    }
+    [data-testid="stFileUploader"] section {
+        background: rgba(15, 23, 42, 0.58);
+        border: 1px dashed rgba(139, 156, 199, 0.4);
+        border-radius: 14px;
+    }
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    [data-testid="stAlert"] {
+        background: rgba(20, 31, 55, 0.8);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+    }
+    .comparison-insight {
+        background: linear-gradient(105deg, rgba(35, 74, 143, 0.24), rgba(96, 58, 161, 0.22));
+        border: 1px solid rgba(132, 145, 223, 0.24);
+        border-radius: 14px;
+        color: #dfe7ff;
+        margin: 0.25rem 0 0.6rem;
+        padding: 0.85rem 1rem;
+    }
+    .comparison-insight strong {
+        color: #fff;
+        margin-right: 0.6rem;
+    }
+    @media (max-width: 760px) {
+        [data-testid="stMainBlockContainer"] {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 1rem;
+        }
+        h1 {
+            font-size: 1.75rem !important;
+        }
+        .dataset-strip__meta {
+            margin-left: 1rem;
+        }
+        .stTabs [data-baseweb="tab"] {
+            font-size: 0.72rem;
+            padding: 0 0.55rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 class IQRClipper(BaseEstimator, TransformerMixin):
@@ -506,6 +762,46 @@ def csv_bytes(frame: pd.DataFrame) -> bytes:
     return frame.to_csv(index=False).encode("utf-8-sig")
 
 
+def style_plotly_figure(figure: go.Figure, *, height: int = 340) -> go.Figure:
+    """Give each interactive chart the app's dark, high-contrast visual treatment."""
+    figure.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter, Segoe UI, sans-serif", "color": "#dbe5fa", "size": 12},
+        margin={"l": 14, "r": 14, "t": 58, "b": 20},
+        height=height,
+        hoverlabel={
+            "bgcolor": "#121a2d",
+            "bordercolor": "rgba(151, 169, 207, 0.26)",
+            "font": {"color": "#f4f7ff"},
+        },
+        legend={
+            "bgcolor": "rgba(0,0,0,0)",
+            "font": {"color": "#c3cde2"},
+        },
+    )
+    figure.update_xaxes(
+        gridcolor="rgba(151, 169, 207, 0.08)",
+        linecolor="rgba(151, 169, 207, 0.17)",
+        tickfont={"color": "#aab7d0"},
+        title_font={"color": "#9daaca"},
+        zerolinecolor="rgba(151, 169, 207, 0.12)",
+    )
+    figure.update_yaxes(
+        gridcolor="rgba(151, 169, 207, 0.11)",
+        linecolor="rgba(151, 169, 207, 0.12)",
+        tickfont={"color": "#aab7d0"},
+        title_font={"color": "#9daaca"},
+        zerolinecolor="rgba(151, 169, 207, 0.12)",
+    )
+    return figure
+
+
+st.markdown(
+    '<div class="hero-kicker">DATA SCIENCE LAB <span>QUALITY INTELLIGENCE</span></div>',
+    unsafe_allow_html=True,
+)
 st.title(APP_TITLE)
 st.caption(
     "Inspect data quality, create a cleaned export, and measure how robust "
@@ -513,6 +809,10 @@ st.caption(
 )
 
 with st.sidebar:
+    st.markdown(
+        '<div class="sidebar-kicker">WORKSPACE / DATASET</div>',
+        unsafe_allow_html=True,
+    )
     st.header("Dataset")
     source = st.radio(
         "Choose a data source", ["Upload CSV", "Generate synthetic"], index=1
@@ -602,9 +902,21 @@ if stored_dataset_key is not None and stored_dataset_key != model_state_key:
     st.session_state.pop("comparison_dataset_key", None)
     st.session_state.pop("comparison_test_fraction", None)
 
-st.caption(
-    f"**Current dataset:** {dataset_label} · {len(frame):,} rows · "
-    f"{len(frame.columns):,} columns"
+st.markdown(
+    f"""
+    <div class="dataset-strip">
+        <span class="dataset-strip__dot"></span>
+        <div>
+            <div class="dataset-strip__label">Active dataset</div>
+            <div class="dataset-strip__name">{escape(dataset_label)}</div>
+        </div>
+        <div class="dataset-strip__meta">
+            {len(frame):,} rows&nbsp;&nbsp;·&nbsp;&nbsp;{len(frame.columns):,} columns
+            &nbsp;&nbsp;·&nbsp;&nbsp;Target: {escape(str(target))}
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 overview_tab, cleaning_tab, model_tab, report_tab = st.tabs(
@@ -612,6 +924,7 @@ overview_tab, cleaning_tab, model_tab, report_tab = st.tabs(
 )
 
 with overview_tab:
+    st.subheader("Dataset health")
     metric_columns = st.columns(4)
     metric_columns[0].metric("Quality score", f"{assessment['quality_score']:.1f}/100")
     metric_columns[1].metric(
@@ -626,26 +939,50 @@ with overview_tab:
         "Rows with outliers", f"{assessment['outlier_rows']:,}"
     )
 
+    score = assessment["quality_score"]
+    if score >= 85:
+        score_label, score_color = "Excellent", "#35d39a"
+    elif score >= 70:
+        score_label, score_color = "Good", "#65a6ff"
+    elif score >= 50:
+        score_label, score_color = "Fair", "#f5b95e"
+    else:
+        score_label, score_color = "Needs attention", "#fb7185"
+
     score_chart = go.Figure(
         go.Indicator(
             mode="gauge+number",
-            value=assessment["quality_score"],
-            number={"suffix": "/100", "valueformat": ".1f"},
-            title={"text": "Composite dataset quality score"},
+            value=score,
+            number={
+                "suffix": "/100",
+                "valueformat": ".1f",
+                "font": {"color": "#f5f7ff", "size": 38},
+            },
+            title={
+                "text": f"DATA QUALITY INDEX · {score_label.upper()}",
+                "font": {"color": "#a9b7d4", "size": 12},
+            },
             gauge={
-                "axis": {"range": [0, 100]},
-                "bar": {"color": "#3666a8"},
+                "axis": {
+                    "range": [0, 100],
+                    "tickcolor": "#73819e",
+                    "tickfont": {"color": "#8f9db8", "size": 10},
+                },
+                "bar": {"color": score_color, "thickness": 0.27},
+                "bgcolor": "rgba(15, 23, 42, 0.88)",
+                "bordercolor": "rgba(151, 169, 207, 0.17)",
+                "borderwidth": 1,
                 "steps": [
-                    {"range": [0, 50], "color": "#f7d9d9"},
-                    {"range": [50, 75], "color": "#fff0c2"},
-                    {"range": [75, 100], "color": "#d8efdf"},
+                    {"range": [0, 50], "color": "rgba(251, 113, 133, 0.14)"},
+                    {"range": [50, 75], "color": "rgba(245, 185, 94, 0.14)"},
+                    {"range": [75, 100], "color": "rgba(53, 211, 154, 0.13)"},
                 ],
             },
         )
     )
-    score_chart.update_layout(height=280, margin={"l": 30, "r": 30, "t": 55, "b": 15})
+    style_plotly_figure(score_chart, height=285)
 
-    left, right = st.columns([1, 1.5])
+    left, right = st.columns([0.95, 1.45])
     with left:
         st.plotly_chart(score_chart, use_container_width=True)
         st.caption(
@@ -669,8 +1006,15 @@ with overview_tab:
                 y="Records",
                 title="Target class distribution",
                 color="Class",
+                color_discrete_sequence=["#5b8cff", "#a78bfa", "#3dd6d0", "#f5b95e"],
             )
             class_chart.update_layout(showlegend=False)
+            class_chart.update_traces(
+                marker_line_color="rgba(229, 237, 255, 0.14)",
+                marker_line_width=1,
+                opacity=0.94,
+            )
+            style_plotly_figure(class_chart, height=350)
             st.plotly_chart(class_chart, use_container_width=True)
         else:
             st.info("No non-missing target values are available for class distribution.")
@@ -777,8 +1121,23 @@ with model_tab:
                 barmode="group",
                 title="Accuracy",
                 range_y=[0, 1],
-                text_auto=".3f",
+                color_discrete_map={
+                    "Before cleaning": "#66748f",
+                    "After cleaning": "#9b7cff",
+                },
+                text_auto=".1%",
             )
+            accuracy_chart.update_traces(
+                marker_line_color="rgba(235, 240, 255, 0.16)",
+                marker_line_width=1,
+                opacity=0.94,
+                textposition="outside",
+            )
+            style_plotly_figure(accuracy_chart, height=360)
+            accuracy_chart.update_layout(
+                legend={"orientation": "h", "y": 1.12, "x": 0}
+            )
+            accuracy_chart.update_yaxes(tickformat=".0%", title=None, range=[0, 1])
             st.plotly_chart(accuracy_chart, use_container_width=True)
         with metric_right:
             f1_chart = px.bar(
@@ -789,9 +1148,41 @@ with model_tab:
                 barmode="group",
                 title="Macro F1 score",
                 range_y=[0, 1],
-                text_auto=".3f",
+                color_discrete_map={
+                    "Before cleaning": "#66748f",
+                    "After cleaning": "#5b8cff",
+                },
+                text_auto=".1%",
             )
+            f1_chart.update_traces(
+                marker_line_color="rgba(235, 240, 255, 0.16)",
+                marker_line_width=1,
+                opacity=0.94,
+                textposition="outside",
+            )
+            style_plotly_figure(f1_chart, height=360)
+            f1_chart.update_layout(
+                legend={"orientation": "h", "y": 1.12, "x": 0}
+            )
+            f1_chart.update_yaxes(tickformat=".0%", title=None, range=[0, 1])
             st.plotly_chart(f1_chart, use_container_width=True)
+        before_mean = metrics.loc[
+            metrics["Condition"] == "Before cleaning", ["Accuracy", "Macro F1"]
+        ].mean()
+        after_mean = metrics.loc[
+            metrics["Condition"] == "After cleaning", ["Accuracy", "Macro F1"]
+        ].mean()
+        accuracy_delta = (after_mean["Accuracy"] - before_mean["Accuracy"]) * 100
+        f1_delta = (after_mean["Macro F1"] - before_mean["Macro F1"]) * 100
+        st.markdown(
+            '<div class="comparison-insight">'
+            "<strong>Average change after cleaning</strong>"
+            f"Accuracy {accuracy_delta:+.1f} pp&nbsp;&nbsp;·&nbsp;&nbsp;"
+            f"Macro F1 {f1_delta:+.1f} pp "
+            "<span>averaged across both models on the same holdout.</span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
         st.dataframe(metrics.round(3), use_container_width=True, hide_index=True)
         st.caption(
             f"Train: {comparison['train_rows']:,} rows · "
