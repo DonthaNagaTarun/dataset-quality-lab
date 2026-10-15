@@ -1,5 +1,17 @@
 modules = ["nodejs-24", "python-3.11"]
 
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 5000
+externalPort = 3000
+
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
@@ -24,13 +36,13 @@ args = "Dataset Quality Assessment"
 name = "Dataset Quality Assessment"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true --server.enableCORS false"
+waitForPort = 5000
 
 [agent]
 stack = "PNPM_WORKSPACE"
